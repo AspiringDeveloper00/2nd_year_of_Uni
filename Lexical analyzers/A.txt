@@ -1,0 +1,227 @@
+import java.util.Scanner;
+
+public class Main {
+
+    public static void main(String[] args) {
+        Scanner in = new  Scanner(System.in);
+        System.out.println("Give string ");
+        String s = in.nextLine();
+        String input = s.strip();
+        Automaton automaton = new Automaton(s);
+        automaton.checkString();
+    }
+}
+
+
+------------------------------------------------------------------------------------------------------
+import java.util.Arrays;
+
+public class Automaton {
+
+
+
+    private String[] availableStates = new String[]{"A", "B", "C"};
+    private String[] availableInputVocab = new String[]{"x", "y"};
+    private String[] availableStackVocab = new String[]{"x", "y", "$"};
+    private String startingState = "A";
+    private String firstStackSymbol = "$";
+
+
+    // The state that the automaton is currently
+    private String currentState = startingState;
+    private Stack stack;
+    private char[] inputArray;
+
+    public Automaton(String input) {
+        this.inputArray = input.toCharArray();
+        this.stack = new Stack(inputArray.length * 2);
+        this.stack.push("$");
+    }
+
+    /*
+    Check if the automaton recognises the String.
+     */
+    public void checkString() {
+        boolean isValid = checkVocab(inputArray);
+
+        if (isValid) {
+            int index = 0;
+            System.out.println("The initial input is " + String.valueOf(inputArray));
+            for (char currentChar : inputArray) {
+
+                if (currentState.equals("A")) {
+                    if (this.stack.peek().equals("$") && String.valueOf(currentChar).equals("y")) {
+                        // REJECT
+                        // The string is starting with y
+                        printState(index);
+                        this.currentState = "C";
+                        index++;
+                        continue;
+                    } else if (this.stack.peek().equals("$") && String.valueOf(currentChar).equals("x")) {
+                        // Push y to the stack
+                        // And change state to B
+                        printState(index);
+                        this.currentState = "B";
+                        this.stack.push("y");
+                        index++;
+                        continue;
+                    }
+
+                } else if (currentState.equals("B")) {
+                    if (this.stack.peek().equals("y") && String.valueOf(currentChar).equals("x")) {
+                        printState(index);
+                        this.currentState = "B";
+                        this.stack.push("y");
+                        index++;
+                        continue;
+                    } else if (stack.peek().equals("y") && String.valueOf(currentChar).equals("y")) {
+                        printState(index);
+                        this.currentState = "B";
+                        String poppedElement = stack.pop();
+                        // System.out.println("Popped element " + poppedElement);
+                        index++;
+                        continue;
+                    } else if (stack.peek().equals("$") && String.valueOf(currentChar).equals("y")) {
+                        printState(index);
+                        // System.out.println("The string has been rejected.");
+                        this.currentState = "C";
+                        index++;
+                        continue;
+                    } else if (stack.peek().equals("$") && String.valueOf(currentChar).equals("x")) {
+                        printState(index);
+                        this.currentState = "B";
+                        stack.push("y");
+                        index++;
+                        continue;
+                    }
+                } else if (currentState.equals("C")) {
+                    printState(index);
+                    index++;
+                    continue;
+                }
+
+            }
+
+            if (this.currentState.equals("B") && this.stack.size() == 1) {
+                System.out.println("string accepted");
+            } else {
+                System.out.println("string rejected");
+            }
+
+        } else {
+            System.exit(1);
+        }
+    }
+
+
+    /*
+    Check if all the characters are included
+    in the available vocabulary
+     */
+    public boolean checkVocab(char[] arr) {
+        Arrays.sort(availableInputVocab);
+
+
+        // Check if every item exists in the input vocab
+        // using the Binary Search Method
+        for (int i = 0; i < arr.length; i++) {
+            int res = Arrays.binarySearch(availableInputVocab, String.valueOf(arr[i]));
+
+            if (res < 0) {
+
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /*
+    Utility function to print:
+    1. The content of the stack
+    2. The current state
+    3. The rest input symbols
+     */
+    public void printState(int index) {
+        System.out.println("=======================================");
+        System.out.print("Stack:");
+        stack.printStack();
+        System.out.println("Current state: " + currentState);
+        System.out.print("Input: ");
+        for (int i = index; i < inputArray.length; i++) {
+            System.out.print(inputArray[i] + " ");
+        }
+        System.out.println();
+
+    }
+}
+
+------------------------------------------------------------------------------------------------------------
+public class Stack {
+    private String[] currentStack;
+    private int top;
+    private int capacity;
+
+    // Initialize the stack
+    Stack (int size) {
+        this.currentStack = new String[size];
+        this.capacity = size;
+        this.top = -1;
+    }
+
+    // Add an element in the stack
+    public void push(String element) {
+
+        // Check for stack overflow
+        if (isFull()) {
+            System.out.println("Overflow\nProgram Terminated\n");
+            System.exit(1);
+        }
+
+        currentStack[++top] = element;
+    }
+
+    // Pop an item from the stack
+    public String pop() {
+
+        // Check for stack underflow
+        if (isEmpty()) {
+            System.out.println("Underflow\nProgram Terminated\n");
+            System.exit(1);
+        }
+
+
+        // Decrease stack size by 1 and return the popped element
+        return currentStack[top--];
+    }
+
+    // Return the top element of the stack
+    public String peek() {
+        if (!isEmpty()) {
+            return currentStack[top];
+        } else {
+            System.exit(1);
+        }
+        return "";
+    }
+
+    // Return the size of the stack
+    public int size() {
+        return  top + 1;
+    }
+
+    // Utility function to print the contents of the stack
+    public void printStack() {
+        for (int i = 0; i < this.size(); i++) {
+            System.out.print(currentStack[i] + " ");
+        }
+        System.out.println();
+    }
+
+    public Boolean isEmpty() {
+        return top == -1;
+    }
+
+    public Boolean isFull() {
+        return top == capacity - 1;
+    }
+}
